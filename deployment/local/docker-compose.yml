@@ -1,0 +1,74 @@
+services:
+#    eco-postgres:
+#        image: postgis/postgis:15-3.3
+#        container_name: 'eco-postgres'
+#        ports:
+#            - "54323:5432"
+#        volumes:
+#            - eco-pgdata:/var/lib/postgresql/data
+#        env_file:
+#            - ../../.env.dev.local
+#        environment:
+#            TZ: "Europe/Moscow"
+#        restart: unless-stopped
+#        networks:
+#            eco:
+#                ipv4_address: 172.21.10.10
+
+    shop-php:
+        build: ./../..
+        container_name: 'shop-php'
+        volumes:
+            - ./../../:/var/www/app
+            - ./../php.ini:/usr/local/etc/php/custom.d/php.ini
+        environment:
+            APP_ENV: 'dev'
+            PHP_INI_SCAN_DIR: "/usr/local/etc/php/conf.d:/usr/local/etc/php/custom.d"
+        entrypoint: /var/www/app/deployment/local/docker-entrypoint.sh
+        command: "php-fpm"
+#        depends_on:
+#            - eco-postgres
+#        links:
+#            - eco-postgres
+        ports:
+            - 9000:9000
+        restart: unless-stopped
+        tty: true
+        stdin_open: true
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        networks:
+            shop:
+                ipv4_address: 172.21.10.11
+
+    shop-nginx:
+        image: nginx:latest
+        container_name: 'shop-nginx'
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            - ./nginx.conf:/etc/nginx/conf.d/default.conf
+            - ./ssl:/etc/nginx/ssl
+            - ./../../:/var/www/app
+        depends_on:
+            - shop-php
+        links:
+            - shop-php
+        restart: unless-stopped
+        networks:
+            shop:
+                ipv4_address: 172.21.10.13
+
+
+#volumes:
+#    eco-pgdata:
+#        driver: local
+
+networks:
+    shop:
+        name: shop-network
+        ipam:
+            driver: default
+            config:
+                -   subnet: "172.21.10.0/24"
