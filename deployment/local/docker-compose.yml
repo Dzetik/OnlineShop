@@ -1,19 +1,19 @@
 services:
-#    eco-postgres:
-#        image: postgis/postgis:15-3.3
-#        container_name: 'eco-postgres'
-#        ports:
-#            - "54323:5432"
-#        volumes:
-#            - eco-pgdata:/var/lib/postgresql/data
-#        env_file:
-#            - ../../.env.dev.local
-#        environment:
-#            TZ: "Europe/Moscow"
-#        restart: unless-stopped
-#        networks:
-#            eco:
-#                ipv4_address: 172.21.10.10
+    shop-postgres:
+        image: postgres:14
+        container_name: 'shop-postgres'
+        ports:
+            - "54323:5432"
+        volumes:
+            - shop-pgdata:/var/lib/postgresql/data
+        env_file:
+            - ../../.env.local
+        environment:
+            TZ: "Europe/Moscow"
+        restart: unless-stopped
+        networks:
+            shop:
+                ipv4_address: 172.27.10.10
 
     shop-php:
         build: ./../..
@@ -26,10 +26,10 @@ services:
             PHP_INI_SCAN_DIR: "/usr/local/etc/php/conf.d:/usr/local/etc/php/custom.d"
         entrypoint: /var/www/app/deployment/local/docker-entrypoint.sh
         command: "php-fpm"
-#        depends_on:
-#            - eco-postgres
-#        links:
-#            - eco-postgres
+        depends_on:
+            - shop-postgres
+        links:
+            - shop-postgres
         ports:
             - 9000:9000
         restart: unless-stopped
@@ -61,9 +61,9 @@ services:
                 ipv4_address: 172.27.10.13
 
 
-#volumes:
-#    eco-pgdata:
-#        driver: local
+volumes:
+    shop-pgdata:
+        driver: local
 
 networks:
     shop:
